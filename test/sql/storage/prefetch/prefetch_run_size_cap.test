@@ -44,11 +44,11 @@ SELECT sum(d) > 0 FROM cap_db.t
 ----
 true
 
-# the 257 blocks split into two 32MB runs, the last block joins the second run rather than becoming a run of its own
+# the 257 blocks split into two 32MB runs and a run of the last block
 query I
 SELECT max(task_count) FROM duckdb_logs_parsed('AsyncTaskSchedule') WHERE pool = 'READ_AHEAD'
 ----
-2
+3
 
 statement ok
 CALL truncate_duckdb_logs()
@@ -73,7 +73,7 @@ true
 query I
 SELECT max(task_count) FROM duckdb_logs_parsed('AsyncTaskSchedule') WHERE pool = 'READ_AHEAD'
 ----
-2
+3
 
 statement ok
 CALL truncate_duckdb_logs()
