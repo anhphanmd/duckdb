@@ -311,20 +311,12 @@ StandardBufferManager::RegisterPrefetch(vector<shared_ptr<BlockHandle>> &handles
 	// each run is read with a single pread into one staging buffer, cap the read size
 	const idx_t max_run_size = Settings::Get<StorageBlockPrefetchMaxRunSizeSetting>(db);
 	const idx_t block_size = to_be_loaded.begin()->second->GetBlockAllocSize();
-	// a run may exceed the cap by a lone trailing block only if the cap spans many blocks, otherwise the cap is strict
-	static constexpr idx_t MIN_BLOCKS_PER_RUN_FOR_TRAILING_BLOCK = 64;
-	const bool allow_trailing_block = max_run_size >= MIN_BLOCKS_PER_RUN_FOR_TRAILING_BLOCK * block_size;
-	for (auto it = to_be_loaded.begin(); it != to_be_loaded.end(); ++it) {
-		auto &entry = *it;
+	for (auto &entry : to_be_loaded) {
 		bool new_run = plan.empty() ||
 		               plan.back().first_block + NumericCast<block_id_t>(plan.back().handles.size()) != entry.first;
 		if (!new_run) {
 			const auto run_size = plan.back().handles.size() * block_size;
-			auto next = std::next(it);
-			// a lone trailing block is not worth a run of its own, let a run within the cap grow by it instead
-			const bool last_of_region = next == to_be_loaded.end() || next->first != entry.first + 1;
-			new_run = run_size + block_size > max_run_size &&
-			          !(allow_trailing_block && last_of_region && run_size <= max_run_size);
+			new_run = run_size + block_size > max_run_size;
 		}
 		if (new_run) {
 			// the block is not adjacent to the previous block or the run is full, start a new run

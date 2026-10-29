@@ -63,7 +63,7 @@ CALL truncate_duckdb_logs()
 statement ok
 DETACH cap_db
 
-# a cap of four blocks is strict, the lone trailing block gets its own run: 64 runs of 4 blocks and 1 of 1 block
+# a cap of four blocks makes 64 runs of 4 blocks and a run of the last block
 statement ok
 SET storage_block_prefetch_max_run_size=1048576
 
