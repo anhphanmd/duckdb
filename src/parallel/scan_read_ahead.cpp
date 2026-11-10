@@ -219,7 +219,7 @@ bool ScanReadAhead::HasActiveProducers() const {
 
 void ScanReadAhead::ReleaseMemoryReservation() {
 	// a finished scan returns its reservation now, not at query end, so later joins and aggregates can use it
-	if (!memory_governor || reservation_released.exchange(true)) {
+	if (!memory_governor) {
 		return;
 	}
 	memory_governor->Release();

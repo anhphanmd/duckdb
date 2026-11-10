@@ -255,8 +255,6 @@ private:
 	const idx_t open_file_budget;
 	//! Backlog budget granted by the reservation, refreshed whenever a job is pushed
 	atomic<idx_t> backlog_budget {0};
-	//! Whether the memory governor's reservation was returned on exhaustion
-	atomic<bool> reservation_released {false};
 
 	mutable mutex lock;
 	deque<unique_ptr<ScanReadAheadJob>> ready_queue;
