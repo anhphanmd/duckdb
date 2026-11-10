@@ -165,9 +165,9 @@ TEST_CASE("An exhausted read-ahead scan returns its memory reservation", "[api]"
 	REQUIRE_NO_FAIL(con.Query("SET temp_directory='" + TestCreatePath("read_ahead_release_tmp") + "'"));
 
 	// another operator's reservation: it fits beside the scan's request, but not beside what the scan holds
-	auto &services = con.context->Services();
-	auto observer = TemporaryMemoryManager::Get(services).Register(services);
-	observer->SetRemainingSizeAndUpdateReservation(services, 770ULL * 1000 * 1000);
+	auto &context = con.context->GetContext();
+	auto observer = TemporaryMemoryManager::Get(context).Register(context);
+	observer->SetRemainingSizeAndUpdateReservation(context, 770ULL * 1000 * 1000);
 	const auto full_reservation = observer->GetReservation();
 
 	auto read_ahead = ScanReadAhead::Create(*con.context);
@@ -190,14 +190,14 @@ TEST_CASE("An exhausted read-ahead scan returns its memory reservation", "[api]"
 		job.reset();
 		if (consumed == 0) {
 			// the scan reserved memory for its backlog
-			observer->UpdateReservation(services);
+			observer->UpdateReservation(context);
 			REQUIRE(observer->GetReservation() < full_reservation);
 		}
 	}
 	REQUIRE(read_ahead->AcquireJob(*con.context, input, produce, job) == ScanReadAheadAcquire::EXHAUSTED);
 
 	// the scan still exists but no longer holds memory
-	observer->UpdateReservation(services);
+	observer->UpdateReservation(context);
 	REQUIRE(observer->GetReservation() == full_reservation);
 }
 #endif
