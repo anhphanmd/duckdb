@@ -210,6 +210,8 @@ private:
 	bool HasActiveProducers() const;
 	//! Pop the oldest queued job
 	unique_ptr<ScanReadAheadJob> ClaimJob();
+	//! Return the memory governor's reservation once the scan is exhausted
+	void ReleaseMemoryReservation();
 	//! Mark the scan as done, i.e., no more jobs to produce
 	void SetDone();
 	//! Whether jobs are held back from admission, used to detect gaps in the batch indexes on exhaustion
@@ -253,6 +255,8 @@ private:
 	const idx_t open_file_budget;
 	//! Backlog budget granted by the reservation, refreshed whenever a job is pushed
 	atomic<idx_t> backlog_budget {0};
+	//! Whether the memory governor's reservation was returned on exhaustion
+	atomic<bool> reservation_released {false};
 
 	mutable mutex lock;
 	deque<unique_ptr<ScanReadAheadJob>> ready_queue;
