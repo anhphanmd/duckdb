@@ -35,6 +35,7 @@
 #include "duckdb/transaction/duck_transaction.hpp"
 #include "duckdb/transaction/local_storage.hpp"
 #include "duckdb/parallel/async_result.hpp"
+#include "duckdb/parallel/progress_verifier.hpp"
 #include "duckdb/parallel/scan_read_ahead.hpp"
 #include "duckdb/storage/data_table.hpp"
 #include "duckdb/storage/storage_index.hpp"
@@ -67,6 +68,8 @@ static unique_ptr<ScanReadAhead> CreateTableScanReadAhead(ClientContext &context
 
 //! Tracks how many rows of a scan assignment have been consumed, for reporting progress
 struct ScanAssignmentProgress {
+	//! Rows consumed between two reports, so progress moves twice within the rows the verifier checks
+	static constexpr idx_t UPDATE_GRANULARITY = ProgressVerifier::MIN_ROWS_GRANULARITY / 2;
 	//! Rows of the current assignment
 	idx_t assignment_rows = 0;
 	//! Rows of the current assignment that were counted as scanned
@@ -85,6 +88,10 @@ struct ScanAssignmentProgress {
 			remaining = scan_state.local_state.RemainingAssignmentRows();
 		}
 		auto consumed = assignment_rows - MinValue<idx_t>(remaining, assignment_rows);
+		// the first vector is reported right away, for scans that stop early on many threads
+		if (reported_rows > 0 && consumed < reported_rows + UPDATE_GRANULARITY) {
+			return 0;
+		}
 		return Report(consumed);
 	}
 	//! Returns the rows of the assignment that were not yet counted
@@ -423,7 +430,10 @@ public:
 
 	//! Counts the rows of the current assignment that were consumed by the scan
 	void UpdateScanProgress(TableScanLocalState &l_state, const TableScanState &scan_state) {
-		scanned_rows.fetch_add(l_state.assignment_progress.Update(scan_state), std::memory_order_relaxed);
+		auto rows = l_state.assignment_progress.Update(scan_state);
+		if (rows > 0) {
+			scanned_rows.fetch_add(rows, std::memory_order_relaxed);
+		}
 	}
 
 	//! How TableScanFunc's loop proceeds after a persistent scan iteration

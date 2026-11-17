@@ -47,6 +47,10 @@ public:
 	ProgressVerifier(ClientContext &context, DebugProgressVerification mode, const string &ignore_list);
 
 public:
+	//! Minimum number of rows before non-moving or inaccurate progress is flagged
+	static constexpr idx_t MIN_ROWS_GRANULARITY = 16384;
+
+public:
 	//! Samples the progress of a pipeline after a non-empty source chunk was pushed through the pipeline
 	void OnSourceChunk(Pipeline &pipeline, idx_t count);
 	//! Called when a pipeline executor finished without exhausting its source (e.g. because of a LIMIT)

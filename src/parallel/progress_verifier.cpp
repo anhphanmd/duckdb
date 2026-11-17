@@ -17,8 +17,6 @@ static constexpr double PROGRESS_EPSILON = 1e-6;
 static constexpr double COMPLETION_EPSILON = 1e-3;
 //! Minimum number of chunks before invalid progress or a missing 100% is flagged
 static constexpr idx_t MIN_CHUNKS_SUPPORTED = 2;
-//! Minimum number of rows before non-moving or inaccurate progress is flagged
-static constexpr idx_t MIN_ROWS_GRANULARITY = 16384;
 //! Maximum deviation between the source progress and the fraction of rows produced
 static constexpr double MAX_INACCURACY = 0.5;
 
