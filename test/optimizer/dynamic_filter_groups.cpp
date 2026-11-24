@@ -61,9 +61,9 @@ TEST_CASE("Large flat scan filters preserve selected rows and NULL policy", "[dy
 	if (optional) {
 		expression = CreateSelectivityOptionalFilterExpression(std::move(expression), LogicalType::BIGINT, 1.0f, 8);
 	}
-	auto state = make_uniq<ExpressionFilterState>(context.GetContext(), *expression);
+	auto state = make_uniq<ExpressionFilterState>(context, *expression);
 	REQUIRE(state->fast_executor);
-	auto fallback = make_uniq<ExpressionFilterState>(context.GetContext(), *expression);
+	auto fallback = make_uniq<ExpressionFilterState>(context, *expression);
 	fallback->fast_executor.reset();
 	for (idx_t scan_count : {idx_t(4 * STANDARD_VECTOR_SIZE + 1), MinValue<idx_t>(31, STANDARD_VECTOR_SIZE),
 	                         idx_t(5 * STANDARD_VECTOR_SIZE)}) {
@@ -80,7 +80,7 @@ TEST_CASE("Large flat scan filters preserve selected rows and NULL policy", "[dy
 		}
 		for (idx_t selection_type = 0; selection_type < 3; selection_type++) {
 			if (optional) {
-				state = make_uniq<ExpressionFilterState>(context.GetContext(), *expression);
+				state = make_uniq<ExpressionFilterState>(context, *expression);
 			}
 			SelectionVector selected;
 			idx_t count = selection_type == 1 ? scan_count - MinValue<idx_t>(7, scan_count) : scan_count;
@@ -94,7 +94,7 @@ TEST_CASE("Large flat scan filters preserve selected rows and NULL policy", "[dy
 			for (idx_t repeat = 0; repeat < 3; repeat++) {
 				if (optional) {
 					// Keep both optional filters active: the fallback records statistics once per chunk.
-					fallback = make_uniq<ExpressionFilterState>(context.GetContext(), *expression);
+					fallback = make_uniq<ExpressionFilterState>(context, *expression);
 					fallback->fast_executor.reset();
 				}
 				if (repeat == 2) {
